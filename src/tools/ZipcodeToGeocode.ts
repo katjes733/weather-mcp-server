@@ -70,7 +70,7 @@ export class ZipcodeToGeocode implements ITool {
   };
 
   private async zipcodeToGeocode(
-    zipcode: number,
+    zipcode: string,
   ): Promise<{ latitude: string; longitude: string }> {
     const response = await this.fetch(
       `https://api.zippopotam.us/us/${zipcode}`,
