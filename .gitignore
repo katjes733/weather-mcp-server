@@ -1,0 +1,8 @@
+logs
+_.log
+coverage
+*.lcov
+node_modules/
+.env
+.DS_Store
+build/
