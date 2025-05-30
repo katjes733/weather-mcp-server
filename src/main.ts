@@ -8,6 +8,7 @@ import logger from "./log";
 import { Helper } from "./helper";
 
 const helper = new Helper();
+await helper.loadTools();
 
 const server = new Server(
   {
@@ -23,7 +24,7 @@ const server = new Server(
 );
 
 export const listToolsHandler = async () => {
-  const tools = Array.from((await helper.getTools()).values()).map((tool) =>
+  const tools = Array.from(helper.getToolsSync().values()).map((tool) =>
     tool.getToolConfig(),
   );
   return {
@@ -40,10 +41,10 @@ export const callToolHandler = async (request: {
   };
 }) => {
   if (
-    (await helper.getTools()).has(request.params.name) &&
+    helper.getToolsSync().has(request.params.name) &&
     request.params.arguments !== undefined
   ) {
-    const tool = (await helper.getTools()).get(request.params.name);
+    const tool = helper.getToolsSync().get(request.params.name);
     if (!tool) {
       throw new Error("Tool not found");
     }
@@ -63,7 +64,7 @@ export async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   logger.info(
-    { tools: [...(await helper.getTools()).keys()] },
+    { tools: [...helper.getToolsSync().keys()] },
     "MCP Server running on stdio with tools:",
   );
 }
