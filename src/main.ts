@@ -36,11 +36,7 @@ server.setRequestHandler(ListToolsRequestSchema, listToolsHandler);
 export const callToolHandler = async (request: {
   params: {
     name: string;
-    arguments?: {
-      zipcode?: number;
-      latitude?: number;
-      longitude?: number;
-    };
+    arguments?: Record<string, any>;
   };
 }) => {
   if (
@@ -67,9 +63,9 @@ export async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   logger.info(
-    `Tools registered: ${[...(await helper.getTools()).keys()].join(", ")}`,
+    { tools: [...(await helper.getTools()).keys()] },
+    "MCP Server running on stdio with tools:",
   );
-  logger.info("MCP Server running on stdio.");
 }
 
 export async function runServer() {

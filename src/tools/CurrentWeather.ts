@@ -14,13 +14,13 @@ export class CurrentWeather implements ITool {
 
   getDescription() {
     return dedent`
-      Get the current weather for a specific location using latitude and longitude.
+      Get the current weather for a specific location using a grid point URL.
       System Prompt:
-      - Always ask the user for the 'latitude' and 'longitude' parameters if they are not provided. Avoid inferring or making up values.
-      - If the parameters are not valid coordinates, ask the user to provide valid latitude and longitude values.
+      - Always ask the user for the 'gridPointUrl' parameter if it is not provided. Avoid inferring or making up values.
+      - If the parameter is not a valid grid point URL, ask the user to provide a valid grid point URL.
+      - Use 'forecast-weather' tool if user wants the weather forecast instead of the current weather.
       Parameters:
-      - 'latitude': a valid latitude coordinate (between -90 and 90).
-      - 'longitude': a valid longitude coordinate (between -180 and 180).
+      - 'gridPointUrl': a valid grid point URL from the National Weather Service API. If not provided, it will be requested from the user.
     `;
   }
 
@@ -31,122 +31,110 @@ export class CurrentWeather implements ITool {
       inputSchema: {
         type: "object",
         properties: {
-          latitude: { type: "number" },
-          longitude: { type: "number" },
+          gridPointUrl: { type: "string" },
         },
-        required: ["latitude", "longitude"],
+        required: ["gridPointUrl"],
       },
     };
   }
 
   handleRequest = async (request: {
     params: {
-      latitude: number;
-      longitude: number;
+      gridPointUrl: string;
     };
   }) => {
-    const { latitude, longitude } = request.params as {
-      latitude: number;
-      longitude: number;
+    const { gridPointUrl } = request.params as {
+      gridPointUrl: string;
     };
 
     if (
-      typeof latitude !== "number" ||
-      latitude < -90 ||
-      latitude > 90 ||
-      typeof longitude !== "number" ||
-      longitude < -180 ||
-      longitude > 180
+      typeof gridPointUrl !== "string" ||
+      !/^https:\/\/api\.weather\.gov\/gridpoints\/\w+\/\d+,\d+$/.test(
+        gridPointUrl,
+      )
     ) {
       return {
         content: [
           {
             type: "text",
-            text: `Invalid coordinates: Latitude ${latitude}, Longitude ${longitude}. Ask user for valid coordinates.`,
+            text: `Invalid grid point URL "${gridPointUrl}". Ask user for a valid grid point URL.`,
           },
         ],
       };
     }
 
-    const weather = await this.getCurrentWeather(latitude, longitude);
+    const currentWeather = await this.getCurrentWeather(gridPointUrl);
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify(weather, null, 2),
+          text: JSON.stringify(currentWeather),
         },
       ],
     };
   };
 
-  private async getCurrentWeather(latitude: number, longitude: number) {
-    try {
-      const headers = {
-        "User-Agent": "weather-mcp-server (katjes733@gmx.net)",
-      };
-      // Step 1: Get the forecast grid point
-      const pointUrl = `https://api.weather.gov/points/${latitude},${longitude}`;
-      const pointResponse = await fetch(pointUrl, {
-        headers,
-      });
+  private async getCurrentWeather(gridPointUrl: string) {
+    const headers = {
+      "User-Agent": "weather-mcp-server (katjes733@gmx.net)",
+    };
+    const observationStationsUrl = `${gridPointUrl}/stations`;
 
-      if (!pointResponse.ok) {
-        throw new Error(`Error fetching point data: ${pointResponse.status}`);
-      }
+    const stationsResponse = await fetch(observationStationsUrl, {
+      headers,
+    });
 
-      const pointData = (await pointResponse.json()) as {
-        properties: { observationStations: string };
-      };
-      const observationStationsUrl = pointData.properties.observationStations;
-
-      // Step 2: Get the nearest observation station
-      const stationsResponse = await fetch(observationStationsUrl, {
-        headers,
-      });
-
-      if (!stationsResponse.ok) {
-        throw new Error(`Error fetching stations: ${stationsResponse.status}`);
-      }
-
-      const stationsData = (await stationsResponse.json()) as {
-        features: { properties: { stationIdentifier: string } }[];
-      };
-      const stationId = stationsData.features[0].properties.stationIdentifier;
-
-      // Step 3: Get current weather observations
-      const observationsUrl = `https://api.weather.gov/stations/${stationId}/observations/latest`;
-      const observationsResponse = await fetch(observationsUrl, {
-        headers,
-      });
-
-      if (!observationsResponse.ok) {
-        throw new Error(
-          `Error fetching observations: ${observationsResponse.status}`,
-        );
-      }
-
-      const observationsData = await observationsResponse.json();
-      const weather = (observationsData as { properties: any }).properties;
-
-      return {
-        temperature: {
-          value: weather.temperature.value,
-          unit: weather.temperature.unitCode,
-        },
-        windSpeed: {
-          value: weather.windSpeed.value,
-          unit: weather.windSpeed.unitCode,
-        },
-        textDescription: weather.textDescription,
-        timestamp: weather.timestamp,
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error("Error:", error.message);
-      } else {
-        console.error("Error:", error);
-      }
+    if (!stationsResponse.ok) {
+      throw new Error(`Error fetching stations: ${stationsResponse.status}`);
     }
+
+    const stationsData = (await stationsResponse.json()) as {
+      features: { properties: { stationIdentifier: string } }[];
+    };
+    const stationId = stationsData.features[0].properties.stationIdentifier;
+
+    const observationsUrl = `https://api.weather.gov/stations/${stationId}/observations/latest`;
+    const observationsResponse = await fetch(observationsUrl, {
+      headers,
+    });
+
+    if (!observationsResponse.ok) {
+      throw new Error(
+        `Error fetching observations: ${observationsResponse.status}`,
+      );
+    }
+
+    const observationsData = await observationsResponse.json();
+    const weather = (observationsData as { properties: any }).properties;
+
+    return {
+      temperature: {
+        value: weather.temperature.value,
+        unit: weather.temperature.unitCode,
+      },
+      windSpeed: {
+        value: weather.windSpeed.value,
+        unit: weather.windSpeed.unitCode,
+      },
+      windDirection: {
+        value: weather.windDirection.value,
+        unit: weather.windDirection.unitCode,
+      },
+      visibility: {
+        value: weather.visibility.value,
+        unit: weather.visibility.unitCode,
+      },
+      precipitationLastHour: {
+        value: weather.precipitationLastHour.value,
+        unit: weather.precipitationLastHour.unitCode,
+      },
+      relativeHumidity: {
+        value: weather.relativeHumidity.value,
+        unit: weather.relativeHumidity.unitCode,
+      },
+      textDescription: weather.textDescription,
+      timestamp: weather.timestamp,
+    };
   }
 }
