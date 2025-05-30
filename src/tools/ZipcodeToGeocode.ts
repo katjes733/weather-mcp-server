@@ -30,7 +30,7 @@ export class ZipcodeToGeocode implements ITool {
       inputSchema: {
         type: "object",
         properties: {
-          zipcode: { type: "number" },
+          zipcode: { type: "string" },
         },
         required: ["zipcode"],
       },
@@ -39,14 +39,14 @@ export class ZipcodeToGeocode implements ITool {
 
   handleRequest = async (request: {
     params: {
-      zipcode: number;
+      zipcode: string;
     };
   }) => {
     const { zipcode } = request.params as {
-      zipcode: number;
+      zipcode: string;
     };
 
-    if (typeof zipcode !== "number" || zipcode < 10000 || zipcode > 99999) {
+    if (typeof zipcode !== "string" || !/^\d{5}(-\d{4})?$/.test(zipcode)) {
       return {
         content: [
           {
