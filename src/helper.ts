@@ -19,6 +19,8 @@ export class Helper {
   private fetch: typeof globalThis.fetch;
   private fs: FileSystem;
   private path: typeof pathModule;
+  private tools: Map<string, ITool> | undefined = undefined;
+  private toolsLoading: Promise<void> | null = null;
 
   constructor(
     fetchDep: typeof globalThis.fetch = globalThis.fetch,
@@ -30,12 +32,12 @@ export class Helper {
     this.path = pathDep;
   }
 
-  private tools: Map<string, ITool> | undefined = undefined;
-
-  async getTools(): Promise<Map<string, ITool>> {
+  // Preload tools asynchronously
+  private async preloadTools(): Promise<void> {
     if (this.tools) {
-      return this.tools;
+      return;
     }
+
     const toolsDir = this.path.join(__dirname, "tools");
     const files = await this.fs.readdir(toolsDir, { recursive: true });
 
@@ -56,7 +58,23 @@ export class Helper {
         }
       }
     }
+  }
 
+  // Public method to trigger lazy loading
+  public async loadTools(): Promise<void> {
+    if (!this.toolsLoading) {
+      this.toolsLoading = this.preloadTools();
+    }
+    await this.toolsLoading;
+  }
+
+  // Synchronous access to tools
+  public getToolsSync(): Map<string, ITool> {
+    if (!this.tools) {
+      throw new Error(
+        "Tools have not been loaded yet. Call loadTools() first.",
+      );
+    }
     return this.tools;
   }
 }
