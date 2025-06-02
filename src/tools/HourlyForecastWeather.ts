@@ -86,6 +86,9 @@ export class ForecastWeather extends AbstractTool implements ITool {
           {
             type: "text",
             text: JSON.stringify(weather),
+            annotations: {
+              includeInContext: false,
+            },
           },
         ],
       }),
@@ -112,7 +115,6 @@ export class ForecastWeather extends AbstractTool implements ITool {
     const forecastDataTyped = forecastData as {
       properties: {
         periods: Array<{
-          name: string;
           startTime: string;
           endTime: string;
           isDaytime: boolean;
@@ -131,19 +133,18 @@ export class ForecastWeather extends AbstractTool implements ITool {
     );
 
     return Array.from(
-      forecastPeriods.map((halfDay) => ({
-        name: halfDay.name,
+      forecastPeriods.map((hourData) => ({
         valid: {
-          startTime: halfDay.startTime,
-          endTime: halfDay.endTime,
+          startTime: hourData.startTime,
+          endTime: hourData.endTime,
         },
-        isDaytime: halfDay.isDaytime,
-        shortForecast: halfDay.shortForecast,
-        temperature: halfDay.temperature,
-        temperatureUnit: halfDay.temperatureUnit,
-        probabilityOfPrecipitation: halfDay.probabilityOfPrecipitation,
-        windSpeed: halfDay.windSpeed,
-        windDirection: halfDay.windDirection,
+        isDaytime: hourData.isDaytime,
+        shortForecast: hourData.shortForecast,
+        temperature: hourData.temperature,
+        temperatureUnit: hourData.temperatureUnit,
+        probabilityOfPrecipitation: `${hourData.probabilityOfPrecipitation?.value ?? 0} ${(hourData.probabilityOfPrecipitation?.unitCode ?? "percent").includes("percent") ? "%" : ""}`,
+        windSpeed: hourData.windSpeed,
+        windDirection: hourData.windDirection,
       })),
     );
   }

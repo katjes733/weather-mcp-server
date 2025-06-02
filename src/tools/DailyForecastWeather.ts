@@ -64,6 +64,9 @@ export class ForecastWeather extends AbstractTool implements ITool {
         {
           type: "text",
           text: JSON.stringify(weather),
+          annotations: {
+            includeInContext: false,
+          },
         },
       ],
     }));
@@ -115,7 +118,7 @@ export class ForecastWeather extends AbstractTool implements ITool {
         shortForecast: halfDay.shortForecast,
         temperature: halfDay.temperature,
         temperatureUnit: halfDay.temperatureUnit,
-        probabilityOfPrecipitation: halfDay.probabilityOfPrecipitation,
+        probabilityOfPrecipitation: `${halfDay.probabilityOfPrecipitation?.value ?? 0} ${(halfDay.probabilityOfPrecipitation?.unitCode ?? "percent").includes("percent") ? "%" : ""}`,
         windSpeed: halfDay.windSpeed,
         windDirection: halfDay.windDirection,
       })),
