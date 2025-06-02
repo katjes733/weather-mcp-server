@@ -4,8 +4,10 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import logger from "./log";
+import createLogger from "./log";
 import { Helper } from "./helper";
+
+const logger = createLogger();
 
 const helper = new Helper();
 await helper.loadTools();
