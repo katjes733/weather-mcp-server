@@ -1,7 +1,7 @@
 import dedent from "dedent";
 import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
-import { ToolValidationError } from "~/types/ToolValidationError";
+import { ToolValidationError } from "~/errors/ToolValidationError";
 
 export class ForecastWeather extends AbstractTool implements ITool {
   getName() {

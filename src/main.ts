@@ -7,12 +7,12 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import createLogger from "./log";
 import { Helper } from "./helper";
 
-const logger = createLogger();
+export const logger = createLogger();
 
-const helper = new Helper();
+export const helper = new Helper();
 await helper.loadTools();
 
-const server = new Server(
+export const server = new Server(
   {
     name: "weather-mcp-server",
     version: "1.0.0",
@@ -48,7 +48,8 @@ export const callToolHandler = async (request: {
   ) {
     const tool = helper.getToolsSync().get(request.params.name);
     if (!tool) {
-      throw new Error("Tool not found");
+      logger.error(`Tool "${request.params.name}" not instantiated.`);
+      throw new Error(`Tool "${request.params.name}" not instantiated.`);
     }
 
     const { arguments: args } = request.params;
@@ -57,7 +58,9 @@ export const callToolHandler = async (request: {
   logger.error(
     `Tool "${request.params.name}" not found or no arguments provided.`,
   );
-  throw new Error(`Tool "${request.params.name}" not found`);
+  throw new Error(
+    `Tool "${request.params.name}" not found or no arguments provided.`,
+  );
 };
 
 server.setRequestHandler(CallToolRequestSchema, callToolHandler);

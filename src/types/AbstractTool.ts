@@ -1,5 +1,5 @@
 import type { ITool } from "./ITool";
-import { ToolValidationError } from "./ToolValidationError";
+import { ToolValidationError } from "../errors/ToolValidationError";
 
 export class AbstractTool implements ITool {
   protected fetch: typeof globalThis.fetch;
@@ -56,7 +56,9 @@ export class AbstractTool implements ITool {
 
   /* eslint-disable no-unused-vars */
   validateWithDefaults(params: Record<string, any>): Record<string, any> {
-    throw new Error("Method 'validateWithDefaults()' must be implemented.");
+    throw new Error(
+      "Method 'validateWithDefaults(params)' must be implemented.",
+    );
   }
 
   async processToolWorkflow(params: Record<string, any>): Promise<{

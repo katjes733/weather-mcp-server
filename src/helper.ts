@@ -32,7 +32,6 @@ export class Helper {
     this.path = pathDep;
   }
 
-  // Preload tools asynchronously
   private async preloadTools(): Promise<void> {
     if (this.tools) {
       return;
@@ -60,7 +59,6 @@ export class Helper {
     }
   }
 
-  // Public method to trigger lazy loading
   public async loadTools(): Promise<void> {
     if (!this.toolsLoading) {
       this.toolsLoading = this.preloadTools();
@@ -68,7 +66,6 @@ export class Helper {
     await this.toolsLoading;
   }
 
-  // Synchronous access to tools
   public getToolsSync(): Map<string, ITool> {
     if (!this.tools) {
       throw new Error(
