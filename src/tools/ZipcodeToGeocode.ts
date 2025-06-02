@@ -4,7 +4,7 @@ import type { ITool } from "~/types/ITool";
 import dedent from "dedent";
 
 export class ZipcodeToGeocode extends AbstractTool implements ITool {
-  // Explicitly constructor definition to ensure test coverage in Bun tracks constructor.
+  // Explicit constructor definition to ensure test coverage in Bun tracks constructor.
   constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
     super(fetch);
   }
