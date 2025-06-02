@@ -1,13 +1,8 @@
 import dedent from "dedent";
+import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
 
-export class ZipcodeToGeocode implements ITool {
-  private fetch: typeof globalThis.fetch;
-
-  constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
-    this.fetch = fetch;
-  }
-
+export class ZipcodeToGeocode extends AbstractTool implements ITool {
   getName() {
     return "zipcode-to-geocode";
   }
@@ -23,39 +18,36 @@ export class ZipcodeToGeocode implements ITool {
     `;
   }
 
-  getToolConfig() {
+  getInputSchema(): {
+    type: string;
+    properties: Record<string, any>;
+    required: string[];
+  } {
     return {
-      name: this.getName(),
-      description: this.getDescription(),
-      inputSchema: {
-        type: "object",
-        properties: {
-          zipcode: { type: "string" },
-        },
-        required: ["zipcode"],
+      type: "object",
+      properties: {
+        zipcode: { type: "string" },
       },
+      required: ["zipcode"],
     };
   }
 
-  handleRequest = async (request: {
-    params: {
-      zipcode: string;
-    };
-  }) => {
-    const { zipcode } = request.params as {
-      zipcode: string;
-    };
+  validateWithDefaults(params: Record<string, any>): Record<string, any> {
+    const { zipcode } = params;
 
     if (typeof zipcode !== "string" || !/^\d{5}(-\d{4})?$/.test(zipcode)) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Invalid US Zip code "${zipcode}". Ask user for a valid US Zip code.`,
-          },
-        ],
-      };
+      throw new Error(
+        `Invalid US Zip code "${zipcode}". Ask user for a valid US Zip code.`,
+      );
     }
+
+    return { zipcode };
+  }
+
+  async processToolWorkflow(
+    params: Record<string, any>,
+  ): Promise<{ content: { type: string; text: string }[] }> {
+    const { zipcode } = params;
 
     const { latitude, longitude } = await this.zipcodeToGeocode(zipcode);
 
@@ -67,7 +59,7 @@ export class ZipcodeToGeocode implements ITool {
         },
       ],
     };
-  };
+  }
 
   private async zipcodeToGeocode(
     zipcode: string,

@@ -10,8 +10,10 @@ export interface ITool {
       required: string[];
     };
   };
-  // eslint-disable-next-line no-unused-vars
+  /* eslint-disable no-unused-vars */
+  validateWithDefaults(params: Record<string, any>): Record<string, any>;
   handleRequest(request: { params: Record<string, any> }): Promise<{
     content: { type: string; text: string }[];
   }>;
+  /* eslint-enable no-unused-vars */
 }

@@ -1,13 +1,8 @@
 import dedent from "dedent";
+import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
 
-export class GridPointUrl implements ITool {
-  private fetch: typeof globalThis.fetch;
-
-  constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
-    this.fetch = fetch;
-  }
-
+export class GridPointUrl extends AbstractTool implements ITool {
   getName() {
     return "get-grid-point-url";
   }
@@ -24,31 +19,23 @@ export class GridPointUrl implements ITool {
     `;
   }
 
-  getToolConfig() {
+  getInputSchema(): {
+    type: string;
+    properties: Record<string, any>;
+    required: string[];
+  } {
     return {
-      name: this.getName(),
-      description: this.getDescription(),
-      inputSchema: {
-        type: "object",
-        properties: {
-          latitude: { type: "number" },
-          longitude: { type: "number" },
-        },
-        required: ["latitude", "longitude"],
+      type: "object",
+      properties: {
+        latitude: { type: "number" },
+        longitude: { type: "number" },
       },
+      required: ["latitude", "longitude"],
     };
   }
 
-  handleRequest = async (request: {
-    params: {
-      latitude: number;
-      longitude: number;
-    };
-  }) => {
-    const { latitude, longitude } = request.params as {
-      latitude: number;
-      longitude: number;
-    };
+  validateWithDefaults(params: Record<string, any>): Record<string, any> {
+    const { latitude, longitude } = params;
 
     if (
       typeof latitude !== "number" ||
@@ -58,15 +45,18 @@ export class GridPointUrl implements ITool {
       longitude < -180 ||
       longitude > 180
     ) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Invalid coordinates: Latitude ${latitude}, Longitude ${longitude}. Ask user for valid coordinates.`,
-          },
-        ],
-      };
+      throw new Error(
+        `Invalid coordinates: Latitude ${latitude}, Longitude ${longitude}. Ask user for valid coordinates.`,
+      );
     }
+
+    return { latitude, longitude };
+  }
+
+  async processToolWorkflow(
+    params: Record<string, any>,
+  ): Promise<{ content: { type: string; text: string }[] }> {
+    const { latitude, longitude } = this.validateWithDefaults(params);
 
     const { gridPointUrl } = await this.getGridPointUrl(latitude, longitude);
 
@@ -78,7 +68,7 @@ export class GridPointUrl implements ITool {
         },
       ],
     };
-  };
+  }
 
   private async getGridPointUrl(
     latitude: number,

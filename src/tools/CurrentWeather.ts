@@ -1,13 +1,8 @@
 import dedent from "dedent";
+import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
 
-export class CurrentWeather implements ITool {
-  private fetch: typeof globalThis.fetch;
-
-  constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
-    this.fetch = fetch;
-  }
-
+export class CurrentWeather extends AbstractTool implements ITool {
   getName() {
     return "current-weather";
   }
@@ -24,28 +19,22 @@ export class CurrentWeather implements ITool {
     `;
   }
 
-  getToolConfig() {
+  getInputSchema(): {
+    type: string;
+    properties: Record<string, any>;
+    required: string[];
+  } {
     return {
-      name: this.getName(),
-      description: this.getDescription(),
-      inputSchema: {
-        type: "object",
-        properties: {
-          gridPointUrl: { type: "string" },
-        },
-        required: ["gridPointUrl"],
+      type: "object",
+      properties: {
+        gridPointUrl: { type: "string" },
       },
+      required: ["gridPointUrl"],
     };
   }
 
-  handleRequest = async (request: {
-    params: {
-      gridPointUrl: string;
-    };
-  }) => {
-    const { gridPointUrl } = request.params as {
-      gridPointUrl: string;
-    };
+  validateWithDefaults(params: Record<string, any>): Record<string, any> {
+    const { gridPointUrl } = params;
 
     if (
       typeof gridPointUrl !== "string" ||
@@ -53,27 +42,28 @@ export class CurrentWeather implements ITool {
         gridPointUrl,
       )
     ) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Invalid grid point URL "${gridPointUrl}". Ask user for a valid grid point URL.`,
-          },
-        ],
-      };
+      throw new Error(
+        `Invalid grid point URL "${gridPointUrl}". Ask user for a valid grid point URL.`,
+      );
     }
 
-    const currentWeather = await this.getCurrentWeather(gridPointUrl);
+    return { gridPointUrl };
+  }
 
-    return {
+  async processToolWorkflow(
+    params: Record<string, any>,
+  ): Promise<{ content: { type: string; text: string }[] }> {
+    const { gridPointUrl } = this.validateWithDefaults(params);
+
+    return this.getCurrentWeather(gridPointUrl).then((weather) => ({
       content: [
         {
           type: "text",
-          text: JSON.stringify(currentWeather),
+          text: JSON.stringify(weather),
         },
       ],
-    };
-  };
+    }));
+  }
 
   private async getCurrentWeather(gridPointUrl: string) {
     const headers = {

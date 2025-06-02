@@ -1,13 +1,9 @@
 import dedent from "dedent";
+import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
+import { ToolValidationError } from "~/types/ToolValidationError";
 
-export class ForecastWeather implements ITool {
-  private fetch: typeof globalThis.fetch;
-
-  constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
-    this.fetch = fetch;
-  }
-
+export class ForecastWeather extends AbstractTool implements ITool {
   getName() {
     return "hourly-forecast-weather";
   }
@@ -30,36 +26,28 @@ export class ForecastWeather implements ITool {
     `;
   }
 
-  getToolConfig() {
+  getInputSchema(): {
+    type: string;
+    properties: Record<string, any>;
+    required: string[];
+  } {
     return {
-      name: this.getName(),
-      description: this.getDescription(),
-      inputSchema: {
-        type: "object",
-        properties: {
-          gridPointUrl: { type: "string" },
-          forecastHours: {
-            type: "number",
-            default: 24,
-            minimum: 1,
-            maximum: 156,
-          },
+      type: "object",
+      properties: {
+        gridPointUrl: { type: "string" },
+        forecastHours: {
+          type: "number",
+          default: 24,
+          minimum: 1,
+          maximum: 156,
         },
-        required: ["gridPointUrl"],
       },
+      required: ["gridPointUrl"],
     };
   }
 
-  handleRequest = async (request: {
-    params: {
-      gridPointUrl: string;
-      forecastHours?: number;
-    };
-  }) => {
-    let { gridPointUrl, forecastHours } = request.params as {
-      gridPointUrl: string;
-      forecastHours?: number;
-    };
+  validateWithDefaults(params: Record<string, any>): Record<string, any> {
+    const { gridPointUrl, forecastHours } = params;
 
     if (
       typeof gridPointUrl !== "string" ||
@@ -67,44 +55,42 @@ export class ForecastWeather implements ITool {
         gridPointUrl,
       )
     ) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Invalid grid point URL "${gridPointUrl}". Ask user for a valid grid point URL.`,
-          },
-        ],
-      };
+      throw new ToolValidationError(
+        `Invalid grid point URL "${gridPointUrl}". Ask user for a valid grid point URL.`,
+      );
     }
     if (!forecastHours) {
-      forecastHours = 24; // Default to 24 hours if not provided
+      return { gridPointUrl, forecastHours: 24 }; // Default to 24 hours if not provided
     }
     if (
       typeof forecastHours !== "number" ||
       forecastHours < 1 ||
       forecastHours > 156
     ) {
-      return {
+      throw new ToolValidationError(
+        `Invalid forecast hours value "${forecastHours}". Valid range is from 1 to 156 hours. Ask user for a valid forecast hours value.`,
+      );
+    }
+
+    return { gridPointUrl, forecastHours };
+  }
+
+  async processToolWorkflow(
+    params: Record<string, any>,
+  ): Promise<{ content: { type: string; text: string }[] }> {
+    const { gridPointUrl, forecastHours } = params;
+
+    return this.getForecastHourly(gridPointUrl, forecastHours).then(
+      (weather) => ({
         content: [
           {
             type: "text",
-            text: `Invalid forecast hours value "${forecastHours}". Ask user for a valid forecast hours value.`,
+            text: JSON.stringify(weather),
           },
         ],
-      };
-    }
-
-    const weather = await this.getForecastHourly(gridPointUrl, forecastHours);
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(weather),
-        },
-      ],
-    };
-  };
+      }),
+    );
+  }
 
   private async getForecastHourly(gridPointUrl: string, forecastHours: number) {
     const headers = {
