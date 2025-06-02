@@ -1,18 +1,22 @@
-# MCP Server Sample Project
+# Weather MCP Server
 
-This is a sample project for the Model Context Protocol (MCP) server using Bun.
+This is a project utilizing the Model Context Protocol (MCP) and Bun to provide a collection of tools for weather reporting with LLMs.
 
-- [MCP Server Sample Project](#mcp-server-sample-project)
+- [Weather MCP Server](#weather-mcp-server)
   - [Background](#background)
   - [Prerequisites](#prerequisites)
   - [Setup Project](#setup-project)
   - [Build](#build)
   - [Setup Claude Desktop](#setup-claude-desktop)
   - [Usage](#usage)
+  - [Development](#development)
+    - [Test Coverage](#test-coverage)
+      - [Prerequisites (Development)](#prerequisites-development)
+      - [Running Test Coverage](#running-test-coverage)
 
 ## Background
 
-It demonstrates how to set up a basic server that can handle tool requests and execute them. It supports adding two numbers and includes a system prompt guiding the LLM to handles the request appropriately.
+It demonstrates how to set up a basic server that can handle tool requests and execute them. It supports current and future weather forecasts (hourly and daily) given a zip code. Multiple tools work in tandem and the LLM is orchestrating the usage of the tools based on their configuration.
 
 ## Prerequisites
 
@@ -54,7 +58,7 @@ This section is influenced by this general [guide](https://modelcontextprotocol.
    ```json
    {
      "mcpServers": {
-       "<sample-mcp-app>": {
+       "weather-mcp-server": {
          "command": "bun",
          "args": ["run", "<path_to_project>/build/main.js"]
        }
@@ -62,7 +66,6 @@ This section is influenced by this general [guide](https://modelcontextprotocol.
    }
    ```
 
-   - Replace <sample-mcp-app> with the name of your MCP Server: e.g. `my-mcp-server`
    - Replace <path_to_project> with the path to your project; e.g.: `/Users/username/Documents/projects/create-mcp-server-app-bun`
 
 4. Restart Claude Desktop; this is important as Claude Desktop will otherwise not apply changes to `claude_desktop_config.json`.
@@ -72,3 +75,50 @@ This section is influenced by this general [guide](https://modelcontextprotocol.
 
 1. You can start by simply asking Claude to add two numbers: `add 2 and 3`, which outputs the corresponding result.
 2. You can also ask Claude to add two numbers: `add numbers`. This will trigger a follow-up request to provide the two numbers. Once provided, the response will contain the corresponding result.
+
+## Development
+
+### Test Coverage
+
+It may be useful to analyze test coverage gaps using `lcov` reports, to gain better visibility into covered lines and functions.
+
+**NOTES:**
+
+- Constructors for classes should be defined in the respective class, as Bun only tracks a classes functions (including constructors). This is problematic when you inherit from an abstract class with its own constructor, which in turn is not tracked. Thus, simply define the Abstract constructor in the class and call `super`.
+- Having some imports (e.g. `import dedent from "dedent";`) at the top of a module may cause Bun to not correctly track that line as covered. Simply move it behind other imports, and it will correctly track.
+
+#### Prerequisites (Development)
+
+1. Install `lcov`:
+
+   ```sh
+   brew install lcov
+   ```
+
+2. Install VSCode extension `ryanluker.vscode-coverage-gutters` (already defined in [settings.json](./.vscode/settings.json)).
+
+#### Running Test Coverage
+
+1. For most cases, it will suffice to run:
+
+   ```sh
+   bun run test:coverage
+   ```
+
+   **NOTE:** If the coverage is less than 100, but no `Uncovered Line #s` are reported, you may need to investigate further by following the next steps and revisiting the [Notes](#test-coverage) above.
+
+2. For advanced cases, run:
+
+   ```sh
+   bun run test:coverage:lcov
+   ```
+
+   It produces the `lcov` [coverage report](./coverage/lcov.info) that is used by VSCode extension `ryanluker.vscode-coverage-gutters` to visualize covered lines in the editor.
+
+3. If you prefer to have an HTML report, run in your terminal:
+
+   ```sh
+   genhtml --function-coverage --branch-coverage --output-directory coverage-report coverage/lcov.info
+   ```
+
+   It produces an HTML [coverage report](./coverage-report/index.html) that you can inspect in your preferred browser.

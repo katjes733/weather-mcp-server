@@ -18,6 +18,7 @@
     "stylelint:fix": "stylelint 'src/**/*.tsx' --aei --fix",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
+    "test:coverage:lcov": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "tsc": "tsc --noEmit",
     "verify": "bun prettier && bun eslint && bun stylelint && bun tsc && bun test:coverage"
   },

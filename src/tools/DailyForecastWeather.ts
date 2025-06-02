@@ -1,4 +1,5 @@
 import dedent from "dedent";
+import { ToolValidationError } from "~/errors/ToolValidationError";
 import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
 
@@ -46,7 +47,7 @@ export class ForecastWeather extends AbstractTool implements ITool {
         gridPointUrl,
       )
     ) {
-      throw new Error(
+      throw new ToolValidationError(
         `Invalid grid point URL "${gridPointUrl}". Ask user for a valid grid point URL.`,
       );
     }

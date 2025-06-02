@@ -1,4 +1,5 @@
 import dedent from "dedent";
+import { ToolValidationError } from "~/errors/ToolValidationError";
 import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
 
@@ -45,7 +46,7 @@ export class GridPointUrl extends AbstractTool implements ITool {
       longitude < -180 ||
       longitude > 180
     ) {
-      throw new Error(
+      throw new ToolValidationError(
         `Invalid coordinates: Latitude ${latitude}, Longitude ${longitude}. Ask user for valid coordinates.`,
       );
     }

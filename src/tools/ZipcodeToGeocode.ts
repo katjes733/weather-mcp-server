@@ -1,8 +1,14 @@
-import dedent from "dedent";
+import { ToolValidationError } from "~/errors/ToolValidationError";
 import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
+import dedent from "dedent";
 
 export class ZipcodeToGeocode extends AbstractTool implements ITool {
+  // Explicitly constructor definition to ensure test coverage in Bun tracks constructor.
+  constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
+    super(fetch);
+  }
+
   getName() {
     return "zipcode-to-geocode";
   }
@@ -36,7 +42,7 @@ export class ZipcodeToGeocode extends AbstractTool implements ITool {
     const { zipcode } = params;
 
     if (typeof zipcode !== "string" || !/^\d{5}(-\d{4})?$/.test(zipcode)) {
-      throw new Error(
+      throw new ToolValidationError(
         `Invalid US Zip code "${zipcode}". Ask user for a valid US Zip code.`,
       );
     }
@@ -75,6 +81,13 @@ export class ZipcodeToGeocode extends AbstractTool implements ITool {
     const data = (await response.json()) as {
       places: { latitude: string; longitude: string }[];
     };
+    if (
+      !data.places ||
+      !Array.isArray(data.places) ||
+      data.places.length === 0
+    ) {
+      throw new Error(`No places found for zipcode ${zipcode}`);
+    }
     return {
       latitude: data.places[0].latitude,
       longitude: data.places[0].longitude,
