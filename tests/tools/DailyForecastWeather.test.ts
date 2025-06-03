@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest, afterEach } from "bun:test";
-import { DailyForecastWeather } from "../DailyForecastWeather";
+import { DailyForecastWeather } from "~/tools/DailyForecastWeather";
 import dedent from "dedent";
 
 const mockFetch = jest.fn();
@@ -423,7 +423,7 @@ describe("DailyForecastWeather", () => {
   it("handleRequest re-throws error other than ToolValidationError", async () => {
     class DummyError extends Error {}
     class ErrorTool extends DailyForecastWeather {
-      validateWithDefaults(params: Record<string, any>): Record<string, any> {
+      validateWithDefaults(): Record<string, any> {
         throw new DummyError("validation failed");
       }
     }

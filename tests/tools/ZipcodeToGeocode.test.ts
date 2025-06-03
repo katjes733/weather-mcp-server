@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest, afterEach } from "bun:test";
-import { ZipcodeToGeocode } from "../ZipcodeToGeocode";
+import { ZipcodeToGeocode } from "~/tools/ZipcodeToGeocode";
 import dedent from "dedent";
 
 const mockFetch = jest.fn();
@@ -210,7 +210,7 @@ describe("ZipcodeToGeocode", () => {
   it("handleRequest re-throws error other than ToolValidationError", async () => {
     class DummyError extends Error {}
     class ErrorTool extends ZipcodeToGeocode {
-      validateWithDefaults(params: Record<string, any>): Record<string, any> {
+      validateWithDefaults(): Record<string, any> {
         throw new DummyError("validation failed");
       }
     }

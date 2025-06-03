@@ -1,6 +1,6 @@
 import { test as it, expect, describe, afterEach } from "bun:test";
-import { AbstractTool } from "../AbstractTool";
-import { ToolValidationError } from "../../errors/ToolValidationError";
+import { AbstractTool } from "~/types/AbstractTool";
+import { ToolValidationError } from "~/errors/ToolValidationError";
 
 describe("AbstractTool direct calls", () => {
   it("direct calls to abstract methods throw errors", () => {
@@ -78,7 +78,7 @@ describe("AbstractTool basic", () => {
   });
 
   class TestToolValidationError extends TestTool {
-    validateWithDefaults(params: Record<string, any>): Record<string, any> {
+    validateWithDefaults(): Record<string, any> {
       throw new ToolValidationError("Invalid input");
     }
   }
@@ -93,7 +93,7 @@ describe("AbstractTool basic", () => {
   });
 
   class TestToolOtherError extends TestTool {
-    validateWithDefaults(params: Record<string, any>): Record<string, any> {
+    validateWithDefaults(): Record<string, any> {
       throw new Error("Something went wrong");
     }
   }
@@ -122,7 +122,7 @@ describe("AbstractTool.getUserAgentHeaderText", () => {
     validateWithDefaults(params: Record<string, any>) {
       return params;
     }
-    async processToolWorkflow(params: Record<string, any>) {
+    async processToolWorkflow() {
       return { content: [] };
     }
   }

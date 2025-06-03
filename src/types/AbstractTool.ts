@@ -1,5 +1,5 @@
 import type { ITool } from "./ITool";
-import { ToolValidationError } from "../errors/ToolValidationError";
+import { ToolValidationError } from "~/errors/ToolValidationError";
 
 export class AbstractTool implements ITool {
   protected fetch: typeof globalThis.fetch;

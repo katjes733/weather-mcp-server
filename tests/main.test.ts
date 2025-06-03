@@ -4,12 +4,11 @@ import {
   expect,
   beforeEach,
   afterEach,
-  mock,
   jest,
   spyOn,
   type Mock,
 } from "bun:test";
-import * as mainModule from "../main";
+import * as mainModule from "~/main";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 describe("listToolsHandler", () => {
@@ -60,7 +59,7 @@ describe("callToolHandler", () => {
     const expectedResponse = {
       content: [{ type: "text", text: "tool response" }],
     };
-    const handleRequest = jest.fn(async ({ params }) => expectedResponse);
+    const handleRequest = jest.fn(async () => expectedResponse);
     const mockTool = { handleRequest };
     getToolsSyncSpy.mockImplementation(() => new Map([["tool1", mockTool]]));
 
@@ -149,7 +148,7 @@ describe("main and runServer", () => {
 describe("startServer", () => {
   it("should call runServer when isMain is true", () => {
     const runServerSpy = spyOn(
-      require("../main"),
+      require("~/main"),
       "runServer",
     ).mockImplementation(() => Promise.resolve());
 
@@ -162,7 +161,7 @@ describe("startServer", () => {
 
   it("should not call runServer when isMain is false", () => {
     const runServerSpy = spyOn(
-      require("../main"),
+      require("~/main"),
       "runServer",
     ).mockImplementation(() => {});
 
@@ -175,7 +174,7 @@ describe("startServer", () => {
 
   it("should not call runServer when isMain is not defined", () => {
     const runServerSpy = spyOn(
-      require("../main"),
+      require("~/main"),
       "runServer",
     ).mockImplementation(() => {});
 

@@ -1,7 +1,6 @@
 import { test as it, expect } from "bun:test";
-import { Helper } from "../helper";
+import { Helper } from "~/helper";
 import path from "path";
-import fs from "fs/promises";
 
 it("getToolsSync throws error if tools are not loaded", () => {
   const helper = new Helper();
@@ -12,7 +11,7 @@ it("getToolsSync throws error if tools are not loaded", () => {
 
 it("loadTools with empty file list returns an empty Map", async () => {
   const mockedFs = {
-    readdir: async (_dir: string, _options?: { recursive?: boolean }) => {
+    readdir: async () => {
       return [];
     },
   };
@@ -24,7 +23,7 @@ it("loadTools with empty file list returns an empty Map", async () => {
 
 it("loadTools ignores non-.ts files", async () => {
   const mockedFs = {
-    readdir: async (_dir: string, _options?: { recursive?: boolean }) => {
+    readdir: async () => {
       return ["not_a_tool.txt", "another.doc"];
     },
   };
@@ -47,7 +46,7 @@ it("loadTools loads tools from .ts files using a real file", async () => {
 it("loadTools executes preloadTools only once", async () => {
   let callCount = 0;
   const mockedFs = {
-    readdir: async (_dir: string, _options?: { recursive?: boolean }) => {
+    readdir: async () => {
       callCount++;
       return [];
     },

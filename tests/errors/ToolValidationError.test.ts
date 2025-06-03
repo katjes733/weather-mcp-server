@@ -1,5 +1,5 @@
 import { it, expect } from "bun:test";
-import { ToolValidationError } from "../ToolValidationError";
+import { ToolValidationError } from "~/errors/ToolValidationError";
 
 it("sets message and name correctly", () => {
   const errorMessage = "Test error message";
