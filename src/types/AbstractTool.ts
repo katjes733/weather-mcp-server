@@ -33,7 +33,11 @@ export class AbstractTool implements ITool {
   }
 
   handleRequest(request: { params: Record<string, any> }): Promise<{
-    content: { type: string; text: string }[];
+    content: {
+      type: string;
+      text: string;
+      annotations?: Record<string, any>;
+    }[];
   }> {
     try {
       return this.processToolWorkflow(

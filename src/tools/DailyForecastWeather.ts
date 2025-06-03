@@ -1,9 +1,14 @@
-import dedent from "dedent";
 import { ToolValidationError } from "~/errors/ToolValidationError";
 import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
+import dedent from "dedent";
 
-export class ForecastWeather extends AbstractTool implements ITool {
+export class DailyForecastWeather extends AbstractTool implements ITool {
+  // Explicit constructor definition to ensure test coverage in Bun tracks constructor.
+  constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
+    super(fetch);
+  }
+
   getName() {
     return "daily-forecast-weather";
   }
@@ -43,7 +48,7 @@ export class ForecastWeather extends AbstractTool implements ITool {
 
     if (
       typeof gridPointUrl !== "string" ||
-      !/^https:\/\/api\.weather\.gov\/gridpoints\/\w+\/\d+,\d+$/.test(
+      !/^https:\/\/api\.weather\.gov\/gridpoints\/[A-Z]{3}\/\d+,\d+$/.test(
         gridPointUrl,
       )
     ) {
@@ -55,9 +60,13 @@ export class ForecastWeather extends AbstractTool implements ITool {
     return { gridPointUrl };
   }
 
-  async processToolWorkflow(
-    params: Record<string, any>,
-  ): Promise<{ content: { type: string; text: string }[] }> {
+  async processToolWorkflow(params: Record<string, any>): Promise<{
+    content: {
+      type: string;
+      text: string;
+      annotations?: Record<string, any>;
+    }[];
+  }> {
     const { gridPointUrl } = this.validateWithDefaults(params);
 
     return this.getForecast(gridPointUrl).then((weather) => ({
@@ -106,7 +115,7 @@ export class ForecastWeather extends AbstractTool implements ITool {
         }>;
       };
     };
-    const forecastPeriods = forecastDataTyped.properties.periods;
+    const forecastPeriods = forecastDataTyped.properties.periods || [];
 
     return Array.from(
       forecastPeriods.map((halfDay) => ({
@@ -119,7 +128,8 @@ export class ForecastWeather extends AbstractTool implements ITool {
         shortForecast: halfDay.shortForecast,
         temperature: halfDay.temperature,
         temperatureUnit: halfDay.temperatureUnit,
-        probabilityOfPrecipitation: `${halfDay.probabilityOfPrecipitation?.value ?? 0} ${(halfDay.probabilityOfPrecipitation?.unitCode ?? "percent").includes("percent") ? "%" : ""}`,
+        probabilityOfPrecipitation:
+          `${halfDay.probabilityOfPrecipitation?.value || 0} ${(halfDay.probabilityOfPrecipitation?.unitCode || "percent").includes("percent") ? "%" : ""}`.trim(),
         windSpeed: halfDay.windSpeed,
         windDirection: halfDay.windDirection,
       })),

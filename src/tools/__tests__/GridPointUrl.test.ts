@@ -142,7 +142,7 @@ describe("GridPointUrl", () => {
     await expect(tool["getGridPointUrl"](0, 0)).rejects.toThrow();
   });
 
-  it("getGridPointUrl throws if API returns undefined forecastGridData", async () => {
+  it("getGridPointUrl returns undefined forecastGridData", async () => {
     const tool = createInstance();
     mockFetch.mockResolvedValue({
       ok: true,
