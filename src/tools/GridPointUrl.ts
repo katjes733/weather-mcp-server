@@ -1,9 +1,14 @@
-import dedent from "dedent";
 import { ToolValidationError } from "~/errors/ToolValidationError";
 import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
+import dedent from "dedent";
 
 export class GridPointUrl extends AbstractTool implements ITool {
+  // Explicit constructor definition to ensure test coverage in Bun tracks constructor.
+  constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
+    super(fetch);
+  }
+
   getName() {
     return "get-grid-point-url";
   }
@@ -79,7 +84,7 @@ export class GridPointUrl extends AbstractTool implements ITool {
       "User-Agent": "weather-mcp-server (katjes733@gmx.net)",
     };
     const pointUrl = `https://api.weather.gov/points/${latitude},${longitude}`;
-    const pointResponse = await fetch(pointUrl, {
+    const pointResponse = await this.fetch(pointUrl, {
       headers,
     });
 

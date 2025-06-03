@@ -72,7 +72,7 @@ export class CurrentWeather extends AbstractTool implements ITool {
     };
     const observationStationsUrl = `${gridPointUrl}/stations`;
 
-    const stationsResponse = await fetch(observationStationsUrl, {
+    const stationsResponse = await this.fetch(observationStationsUrl, {
       headers,
     });
 
@@ -86,7 +86,7 @@ export class CurrentWeather extends AbstractTool implements ITool {
     const stationId = stationsData.features[0].properties.stationIdentifier;
 
     const observationsUrl = `https://api.weather.gov/stations/${stationId}/observations/latest`;
-    const observationsResponse = await fetch(observationsUrl, {
+    const observationsResponse = await this.fetch(observationsUrl, {
       headers,
     });
 
