@@ -1,35 +1,43 @@
 import { describe, it, expect, beforeEach, jest } from "bun:test";
-import { DailyForecastWeather } from "../DailyForecastWeather";
+import { HourlyForecastWeather } from "../HourlyForecastWeather";
 import dedent from "dedent";
 
 const mockFetch = jest.fn();
 
 function createInstance() {
-  const instance = new DailyForecastWeather(
+  const instance = new HourlyForecastWeather(
     mockFetch as unknown as typeof globalThis.fetch,
   );
   return instance;
 }
 
 describe("DailyForecastWeather", () => {
-  const expectedName = "daily-forecast-weather";
+  const expectedName = "hourly-forecast-weather";
   const expectedDescription = dedent`
-      Get the daily weather forecast (including break down for day and night) for a specific grid point using a grid point URL.
-      The weather forecast data can be used to provide detailed weather information for the next seven days.
+      Get the hourly weather forecast for a specific grid point using a grid point URL.
+      The weather forecast data can be used to provide detailed weather information for up to the next 6.5 days, but is limited by default to the next 24 hours
       System Prompt:
       - Always ask the user for the 'gridPointUrl' parameter if it is not provided. Avoid inferring or making up values.
       - If the parameter is not a valid grid point URL, ask the user to provide a valid grid point URL.
       - Use 'current-weather' tool if user wants the current weather instead of the forecast.
-      - This tool provides a daily forecast, which includes both day and night weather conditions.
-      - This tool is specifically designed to provide a daily forecast, not an hourly forecast.
-      - This tool is the default forecast tool unless the user specifies explicitly they want an hourly forecast.
+      - This tool provides an hourly forecast, which includes detailed weather conditions for each hour.
+      - This tool is specifically designed to provide an hourly forecast, not a daily forecast.
+      - Avoid using this tool for daily forecasts, as it is intended for hourly weather data.
+      - Avoid using this tool unless the user explicitly requests an hourly forecast. For unspecified forecasts, use the 'daily-forecast-weather' tool instead.
       Parameters:
       - 'gridPointUrl': a valid grid point URL from the National Weather Service API. If not provided, it will be requested from the user.
+      - 'forecastHours': the number of hours to forecast, default is 24 hours. Valid range is from 1 to 156 hours.
     `;
   const expectedInputSchema = {
     type: "object",
     properties: {
       gridPointUrl: { type: "string" },
+      forecastHours: {
+        type: "number",
+        default: 24,
+        minimum: 1,
+        maximum: 156,
+      },
     },
     required: ["gridPointUrl"],
   };
@@ -63,13 +71,34 @@ describe("DailyForecastWeather", () => {
       }),
     ).toEqual({
       gridPointUrl: "https://api.weather.gov/gridpoints/PSR/171,48",
+      forecastHours: 24,
     });
     expect(
       tool.validateWithDefaults({
         gridPointUrl: "https://api.weather.gov/gridpoints/KEY/14,23",
+        forecastHours: 48,
       }),
     ).toEqual({
       gridPointUrl: "https://api.weather.gov/gridpoints/KEY/14,23",
+      forecastHours: 48,
+    });
+    expect(
+      tool.validateWithDefaults({
+        gridPointUrl: "https://api.weather.gov/gridpoints/KEY/14,23",
+        forecastHours: "",
+      }),
+    ).toEqual({
+      gridPointUrl: "https://api.weather.gov/gridpoints/KEY/14,23",
+      forecastHours: 24,
+    });
+    expect(
+      tool.validateWithDefaults({
+        gridPointUrl: "https://api.weather.gov/gridpoints/KEY/14,23",
+        forecastHours: 0,
+      }),
+    ).toEqual({
+      gridPointUrl: "https://api.weather.gov/gridpoints/KEY/14,23",
+      forecastHours: 24,
     });
   });
 
@@ -101,9 +130,28 @@ describe("DailyForecastWeather", () => {
     expect(() => tool.validateWithDefaults({ gridPointUrl: "" })).toThrow(
       "Invalid grid point URL",
     );
+
+    expect(() =>
+      tool.validateWithDefaults({
+        gridPointUrl: "https://api.weather.gov/gridpoints/PSR/171,48",
+        forecastHours: "48",
+      }),
+    ).toThrow("Invalid forecast hours value");
+    expect(() =>
+      tool.validateWithDefaults({
+        gridPointUrl: "https://api.weather.gov/gridpoints/PSR/171,48",
+        forecastHours: -1,
+      }),
+    ).toThrow("Invalid forecast hours value");
+    expect(() =>
+      tool.validateWithDefaults({
+        gridPointUrl: "https://api.weather.gov/gridpoints/PSR/171,48",
+        forecastHours: 157,
+      }),
+    ).toThrow("Invalid forecast hours value");
   });
 
-  it("processToolWorkflow returns correct content for valid gridPointUrl", async () => {
+  it("processToolWorkflow returns correct content for valid gridPointUrl and forecastHours", async () => {
     const tool = createInstance();
     mockFetch.mockResolvedValue({
       ok: true,
@@ -111,55 +159,51 @@ describe("DailyForecastWeather", () => {
         properties: {
           periods: [
             {
-              name: "Today",
-              startTime: "2025-06-03T08:00:00-07:00",
-              endTime: "2025-06-03T18:00:00-07:00",
+              startTime: "2025-06-03T10:00:00-07:00",
+              endTime: "2025-06-03T11:00:00-07:00",
               isDaytime: true,
               shortForecast: "Sunny",
-              temperature: 96,
+              temperature: 86,
               temperatureUnit: "F",
               probabilityOfPrecipitation: {
                 unitCode: "wmoUnit:percent",
                 value: 3,
               },
-              windSpeed: "0 to 5 mph",
-              windDirection: "SW",
+              windSpeed: "0 mph",
+              windDirection: "",
             },
             {
-              name: "Tonight",
-              startTime: "2025-06-03T18:00:00-07:00",
-              endTime: "2025-06-04T06:00:00-07:00",
-              isDaytime: false,
-              shortForecast: "Cloudy",
-              temperature: 70,
+              startTime: "2025-06-03T11:00:00-07:00",
+              endTime: "2025-06-03T12:00:00-07:00",
+              isDaytime: true,
+              shortForecast: "Mostly sunny",
+              temperature: 88,
               temperatureUnit: "F",
               probabilityOfPrecipitation: {
                 unitCode: "",
               },
-              windSpeed: "5 to 10 mph",
+              windSpeed: "5 mph",
               windDirection: "SSW",
             },
             {
-              name: "Wednesday",
-              startTime: "2025-06-04T06:00:00-07:00",
-              endTime: "2025-06-04T18:00:00-07:00",
+              startTime: "2025-06-03T12:00:00-07:00",
+              endTime: "2025-06-03T13:00:00-07:00",
               isDaytime: true,
-              shortForecast: "Mostly sunny",
-              temperature: 97,
+              shortForecast: "Sunny",
+              temperature: 90,
               temperatureUnit: "F",
               probabilityOfPrecipitation: {
                 value: 4,
               },
-              windSpeed: "10 to 15 mph",
-              windDirection: "S",
+              windSpeed: "10 mph",
+              windDirection: "SW",
             },
             {
-              name: "Wednesday Night",
-              startTime: "2025-06-04T18:00:00-07:00",
-              endTime: "2025-06-05T06:00:00-07:00",
-              isDaytime: false,
-              shortForecast: "Mostly Clear",
-              temperature: 71,
+              startTime: "2025-06-03T13:00:00-07:00",
+              endTime: "2025-06-03T14:00:00-07:00",
+              isDaytime: true,
+              shortForecast: "Mostly sunny",
+              temperature: 92,
               temperatureUnit: "F",
               probabilityOfPrecipitation: {
                 unitCode: "wmoUnit:other",
@@ -168,12 +212,27 @@ describe("DailyForecastWeather", () => {
               windSpeed: "0 to 5 mph",
               windDirection: "SSW",
             },
+            {
+              startTime: "2025-06-03T14:00:00-07:00",
+              endTime: "2025-06-03T15:00:00-07:00",
+              isDaytime: true,
+              shortForecast: "Sunny",
+              temperature: 94,
+              temperatureUnit: "F",
+              probabilityOfPrecipitation: {
+                unitCode: "wmoUnit:percent",
+                value: 0,
+              },
+              windSpeed: "0 to 5 mph",
+              windDirection: "S",
+            },
           ],
         },
       }),
     });
     const result = await tool.processToolWorkflow({
       gridPointUrl: "https://api.weather.gov/gridpoints/PSR/171,48",
+      forecastHours: 4,
     });
     expect(result).toEqual({
       content: [
@@ -181,56 +240,52 @@ describe("DailyForecastWeather", () => {
           type: "text",
           text: JSON.stringify([
             {
-              name: "Today",
               valid: {
-                startTime: "2025-06-03T08:00:00-07:00",
-                endTime: "2025-06-03T18:00:00-07:00",
+                startTime: "2025-06-03T10:00:00-07:00",
+                endTime: "2025-06-03T11:00:00-07:00",
               },
               isDaytime: true,
               shortForecast: "Sunny",
-              temperature: 96,
+              temperature: 86,
               temperatureUnit: "F",
               probabilityOfPrecipitation: "3 %",
-              windSpeed: "0 to 5 mph",
-              windDirection: "SW",
+              windSpeed: "0 mph",
+              windDirection: "",
             },
             {
-              name: "Tonight",
               valid: {
-                startTime: "2025-06-03T18:00:00-07:00",
-                endTime: "2025-06-04T06:00:00-07:00",
-              },
-              isDaytime: false,
-              shortForecast: "Cloudy",
-              temperature: 70,
-              temperatureUnit: "F",
-              probabilityOfPrecipitation: "0 %",
-              windSpeed: "5 to 10 mph",
-              windDirection: "SSW",
-            },
-            {
-              name: "Wednesday",
-              valid: {
-                startTime: "2025-06-04T06:00:00-07:00",
-                endTime: "2025-06-04T18:00:00-07:00",
+                startTime: "2025-06-03T11:00:00-07:00",
+                endTime: "2025-06-03T12:00:00-07:00",
               },
               isDaytime: true,
               shortForecast: "Mostly sunny",
-              temperature: 97,
+              temperature: 88,
               temperatureUnit: "F",
-              probabilityOfPrecipitation: "4 %",
-              windSpeed: "10 to 15 mph",
-              windDirection: "S",
+              probabilityOfPrecipitation: "0 %",
+              windSpeed: "5 mph",
+              windDirection: "SSW",
             },
             {
-              name: "Wednesday Night",
               valid: {
-                startTime: "2025-06-04T18:00:00-07:00",
-                endTime: "2025-06-05T06:00:00-07:00",
+                startTime: "2025-06-03T12:00:00-07:00",
+                endTime: "2025-06-03T13:00:00-07:00",
               },
-              isDaytime: false,
-              shortForecast: "Mostly Clear",
-              temperature: 71,
+              isDaytime: true,
+              shortForecast: "Sunny",
+              temperature: 90,
+              temperatureUnit: "F",
+              probabilityOfPrecipitation: "4 %",
+              windSpeed: "10 mph",
+              windDirection: "SW",
+            },
+            {
+              valid: {
+                startTime: "2025-06-03T13:00:00-07:00",
+                endTime: "2025-06-03T14:00:00-07:00",
+              },
+              isDaytime: true,
+              shortForecast: "Mostly sunny",
+              temperature: 92,
               temperatureUnit: "F",
               probabilityOfPrecipitation: "2",
               windSpeed: "0 to 5 mph",
@@ -244,22 +299,25 @@ describe("DailyForecastWeather", () => {
       ],
     });
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://api.weather.gov/gridpoints/PSR/171,48/forecast?units=us",
+      "https://api.weather.gov/gridpoints/PSR/171,48/forecast/hourly?units=us",
       expect.objectContaining({
         headers: expect.any(Object),
       }),
     );
   });
 
-  it("getForecastDaily throws if fetch not ok", async () => {
+  it("getForecastHourly throws if fetch not ok", async () => {
     const tool = createInstance();
     mockFetch.mockResolvedValue({ ok: false, status: 500 });
     await expect(
-      tool["getForecastDaily"]("https://api.weather.gov/gridpoints/PSR/171,48"),
+      tool["getForecastHourly"](
+        "https://api.weather.gov/gridpoints/PSR/171,48",
+        4,
+      ),
     ).rejects.toThrow("Error fetching forecast data: 500");
   });
 
-  it("getForecastDaily returns forecast from URL", async () => {
+  it("getForecastHourly returns forecast from URL", async () => {
     const tool = createInstance();
     mockFetch.mockResolvedValue({
       ok: true,
@@ -267,9 +325,8 @@ describe("DailyForecastWeather", () => {
         properties: {
           periods: [
             {
-              name: "Today",
-              startTime: "2025-06-03T08:00:00-07:00",
-              endTime: "2025-06-03T18:00:00-07:00",
+              startTime: "2025-06-03T11:00:00-07:00",
+              endTime: "2025-06-03T12:00:00-07:00",
               isDaytime: true,
               shortForecast: "Sunny",
               temperature: 96,
@@ -285,15 +342,15 @@ describe("DailyForecastWeather", () => {
         },
       }),
     });
-    const result = await tool["getForecastDaily"](
+    const result = await tool["getForecastHourly"](
       "https://api.weather.gov/gridpoints/PSR/171,48",
+      1,
     );
     expect(result).toEqual([
       {
-        name: "Today",
         valid: {
-          startTime: "2025-06-03T08:00:00-07:00",
-          endTime: "2025-06-03T18:00:00-07:00",
+          startTime: "2025-06-03T11:00:00-07:00",
+          endTime: "2025-06-03T12:00:00-07:00",
         },
         isDaytime: true,
         shortForecast: "Sunny",
@@ -306,25 +363,29 @@ describe("DailyForecastWeather", () => {
     ]);
   });
 
-  it("getForecastDaily throws if API returns no properties property", async () => {
+  it("getForecastHourly throws if API returns no properties property", async () => {
     const tool = createInstance();
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({}),
     });
     await expect(
-      tool["getForecastDaily"]("https://api.weather.gov/gridpoints/PSR/171,48"),
+      tool["getForecastHourly"](
+        "https://api.weather.gov/gridpoints/PSR/171,48",
+        4,
+      ),
     ).rejects.toThrow();
   });
 
-  it("getForecastDaily returns empty array if API returns undefined periods", async () => {
+  it("getForecastHourly return empty array if API returns undefined periods", async () => {
     const tool = createInstance();
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({ properties: {} }),
     });
-    const result = await tool["getForecastDaily"](
+    const result = await tool["getForecastHourly"](
       "https://api.weather.gov/gridpoints/PSR/171,48",
+      4,
     );
     expect(result).toEqual([]);
   });
@@ -346,9 +407,8 @@ describe("DailyForecastWeather", () => {
         properties: {
           periods: [
             {
-              name: "Today",
-              startTime: "2025-06-03T08:00:00-07:00",
-              endTime: "2025-06-03T18:00:00-07:00",
+              startTime: "2025-06-03T10:00:00-07:00",
+              endTime: "2025-06-03T11:00:00-07:00",
               isDaytime: true,
               shortForecast: "Sunny",
               temperature: 96,
@@ -373,10 +433,9 @@ describe("DailyForecastWeather", () => {
           type: "text",
           text: JSON.stringify([
             {
-              name: "Today",
               valid: {
-                startTime: "2025-06-03T08:00:00-07:00",
-                endTime: "2025-06-03T18:00:00-07:00",
+                startTime: "2025-06-03T10:00:00-07:00",
+                endTime: "2025-06-03T11:00:00-07:00",
               },
               isDaytime: true,
               shortForecast: "Sunny",
@@ -396,7 +455,7 @@ describe("DailyForecastWeather", () => {
   });
 
   it("handleRequest returns ToolValidationError message if thrown", async () => {
-    const tool = new DailyForecastWeather();
+    const tool = new HourlyForecastWeather();
     const result = await tool.handleRequest({
       params: { gridPointUrl: "https://api.summer.gov/gridpoints/PSR/171,48" },
     });
@@ -412,7 +471,7 @@ describe("DailyForecastWeather", () => {
 
   it("handleRequest re-throws error other than ToolValidationError", async () => {
     class DummyError extends Error {}
-    class ErrorTool extends DailyForecastWeather {
+    class ErrorTool extends HourlyForecastWeather {
       validateWithDefaults(params: Record<string, any>): Record<string, any> {
         throw new DummyError("validation failed");
       }

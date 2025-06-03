@@ -13,7 +13,11 @@ export interface ITool {
   /* eslint-disable no-unused-vars */
   validateWithDefaults(params: Record<string, any>): Record<string, any>;
   handleRequest(request: { params: Record<string, any> }): Promise<{
-    content: { type: string; text: string }[];
+    content: {
+      type: string;
+      text: string;
+      annotations?: Record<string, any>;
+    }[];
   }>;
   /* eslint-enable no-unused-vars */
 }

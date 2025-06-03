@@ -69,7 +69,7 @@ export class DailyForecastWeather extends AbstractTool implements ITool {
   }> {
     const { gridPointUrl } = this.validateWithDefaults(params);
 
-    return this.getForecast(gridPointUrl).then((weather) => ({
+    return this.getForecastDaily(gridPointUrl).then((weather) => ({
       content: [
         {
           type: "text",
@@ -82,7 +82,7 @@ export class DailyForecastWeather extends AbstractTool implements ITool {
     }));
   }
 
-  private async getForecast(gridPointUrl: string) {
+  private async getForecastDaily(gridPointUrl: string) {
     const headers = {
       "User-Agent": "weather-mcp-server (katjes733@gmx.net)",
     };

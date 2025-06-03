@@ -1,9 +1,14 @@
-import dedent from "dedent";
 import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
 import { ToolValidationError } from "~/errors/ToolValidationError";
+import dedent from "dedent";
 
-export class ForecastWeather extends AbstractTool implements ITool {
+export class HourlyForecastWeather extends AbstractTool implements ITool {
+  // Explicit constructor definition to ensure test coverage in Bun tracks constructor.
+  constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
+    super(fetch);
+  }
+
   getName() {
     return "hourly-forecast-weather";
   }
@@ -51,7 +56,7 @@ export class ForecastWeather extends AbstractTool implements ITool {
 
     if (
       typeof gridPointUrl !== "string" ||
-      !/^https:\/\/api\.weather\.gov\/gridpoints\/\w+\/\d+,\d+$/.test(
+      !/^https:\/\/api\.weather\.gov\/gridpoints\/[A-Z]{3}\/\d+,\d+$/.test(
         gridPointUrl,
       )
     ) {
@@ -75,9 +80,13 @@ export class ForecastWeather extends AbstractTool implements ITool {
     return { gridPointUrl, forecastHours };
   }
 
-  async processToolWorkflow(
-    params: Record<string, any>,
-  ): Promise<{ content: { type: string; text: string }[] }> {
+  async processToolWorkflow(params: Record<string, any>): Promise<{
+    content: {
+      type: string;
+      text: string;
+      annotations?: Record<string, any>;
+    }[];
+  }> {
     const { gridPointUrl, forecastHours } = params;
 
     return this.getForecastHourly(gridPointUrl, forecastHours).then(
@@ -127,7 +136,7 @@ export class ForecastWeather extends AbstractTool implements ITool {
         }>;
       };
     };
-    const forecastPeriods = forecastDataTyped.properties.periods.slice(
+    const forecastPeriods = (forecastDataTyped.properties.periods || []).slice(
       0,
       forecastHours,
     );
@@ -142,7 +151,8 @@ export class ForecastWeather extends AbstractTool implements ITool {
         shortForecast: hourData.shortForecast,
         temperature: hourData.temperature,
         temperatureUnit: hourData.temperatureUnit,
-        probabilityOfPrecipitation: `${hourData.probabilityOfPrecipitation?.value ?? 0} ${(hourData.probabilityOfPrecipitation?.unitCode ?? "percent").includes("percent") ? "%" : ""}`,
+        probabilityOfPrecipitation:
+          `${hourData.probabilityOfPrecipitation?.value || 0} ${(hourData.probabilityOfPrecipitation?.unitCode || "percent").includes("percent") ? "%" : ""}`.trim(),
         windSpeed: hourData.windSpeed,
         windDirection: hourData.windDirection,
       })),
