@@ -10,6 +10,7 @@ This is a project utilizing the Model Context Protocol (MCP) and Bun to provide 
   - [Setup Claude Desktop](#setup-claude-desktop)
   - [Usage](#usage)
   - [Development](#development)
+    - [New Tools](#new-tools)
     - [Test Coverage](#test-coverage)
       - [Prerequisites (Development)](#prerequisites-development)
       - [Running Test Coverage](#running-test-coverage)
@@ -60,13 +61,18 @@ This section is influenced by this general [guide](https://modelcontextprotocol.
      "mcpServers": {
        "weather-mcp-server": {
          "command": "bun",
-         "args": ["run", "<path_to_project>/build/main.js"]
+         "args": ["run", "<path_to_project>/build/main.js"],
+         "env": {
+           "APP_NAME": "weather-mcp-server",
+           "APP_EMAIL": "<app-email>"
+         }
        }
      }
    }
    ```
 
-   - Replace <path_to_project> with the path to your project; e.g.: `/Users/username/Documents/projects/create-mcp-server-app-bun`
+   - Replace `<path_to_project>` with the path to your project; e.g.: `/Users/username/Documents/projects/create-mcp-server-app-bun`
+   - Replace `<app-email>` with an email that will be used to identify some API requests; e.g.: `my@email.com`
 
 4. Restart Claude Desktop; this is important as Claude Desktop will otherwise not apply changes to `claude_desktop_config.json`.
 5. On the main screen, click the `Search and Tools` button and then on your MCP server name. Ensure that it is enabled.
@@ -77,6 +83,32 @@ This section is influenced by this general [guide](https://modelcontextprotocol.
 2. You can also ask Claude to add two numbers: `add numbers`. This will trigger a follow-up request to provide the two numbers. Once provided, the response will contain the corresponding result.
 
 ## Development
+
+### New Tools
+
+New tools may be added by ensuring each new tool module (in `./src/tools` extends `AbstractTool` and implements `ITool` and provides an explicit constructor (for test coverage):
+
+```typescript
+...
+export class NewTool extends AbstractTool implements ITool {
+  // Explicit constructor definition to ensure test coverage in Bun tracks constructor.
+  constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
+    super(fetch);
+  }
+...
+```
+
+Additionally, the following methods must be implemented:
+
+- `getName`
+- `getDescription`
+- `getInputSchema`
+- `validateWithDefaults`
+- `processToolWorkflow`
+
+Use existing tool(s) as guide for the implementation and don't forget to implement a corresponding test.
+
+There is no further configuration required to register any additional tool; they are automatically included upon restart of the MCP server.
 
 ### Test Coverage
 
