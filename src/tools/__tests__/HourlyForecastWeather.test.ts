@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from "bun:test";
+import { describe, it, expect, beforeEach, jest, afterEach } from "bun:test";
 import { HourlyForecastWeather } from "../HourlyForecastWeather";
 import dedent from "dedent";
 
@@ -12,6 +12,9 @@ function createInstance() {
 }
 
 describe("DailyForecastWeather", () => {
+  const originalAppName = process.env.APP_NAME;
+  const originalAppEmail = process.env.APP_EMAIL;
+
   const expectedName = "hourly-forecast-weather";
   const expectedDescription = dedent`
       Get the hourly weather forecast for a specific grid point using a grid point URL.
@@ -43,7 +46,14 @@ describe("DailyForecastWeather", () => {
   };
 
   beforeEach(() => {
+    process.env.APP_NAME = "weather-mcp-server";
+    process.env.APP_EMAIL = "some.email@net.com";
     mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    process.env.APP_NAME = originalAppName;
+    process.env.APP_EMAIL = originalAppEmail;
   });
 
   it("getName returns correct name", () => {

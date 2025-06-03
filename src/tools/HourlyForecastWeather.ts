@@ -106,7 +106,7 @@ export class HourlyForecastWeather extends AbstractTool implements ITool {
 
   private async getForecastHourly(gridPointUrl: string, forecastHours: number) {
     const headers = {
-      "User-Agent": "weather-mcp-server (katjes733@gmx.net)",
+      "User-Agent": this.getUserAgentHeaderText(),
     };
 
     const forecastUrl = `${gridPointUrl}/forecast/hourly?units=us`;

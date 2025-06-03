@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from "bun:test";
+import { describe, it, expect, beforeEach, jest, afterEach } from "bun:test";
 import { ZipcodeToGeocode } from "../ZipcodeToGeocode";
 import dedent from "dedent";
 
@@ -12,6 +12,9 @@ function createInstance() {
 }
 
 describe("ZipcodeToGeocode", () => {
+  const originalAppName = process.env.APP_NAME;
+  const originalAppEmail = process.env.APP_EMAIL;
+
   const expectedName = "zipcode-to-geocode";
   const expectedDescription = dedent`
     Convert a US ZIP code to geographic coordinates (latitude and longitude).
@@ -30,7 +33,14 @@ describe("ZipcodeToGeocode", () => {
   };
 
   beforeEach(() => {
+    process.env.APP_NAME = "weather-mcp-server";
+    process.env.APP_EMAIL = "some.email@net.com";
     mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    process.env.APP_NAME = originalAppName;
+    process.env.APP_EMAIL = originalAppEmail;
   });
 
   it("getName returns correct name", () => {

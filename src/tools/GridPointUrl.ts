@@ -81,7 +81,7 @@ export class GridPointUrl extends AbstractTool implements ITool {
     longitude: number,
   ): Promise<{ gridPointUrl: string }> {
     const headers = {
-      "User-Agent": "weather-mcp-server (katjes733@gmx.net)",
+      "User-Agent": this.getUserAgentHeaderText(),
     };
     const pointUrl = `https://api.weather.gov/points/${latitude},${longitude}`;
     const pointResponse = await this.fetch(pointUrl, {

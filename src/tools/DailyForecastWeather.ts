@@ -84,7 +84,7 @@ export class DailyForecastWeather extends AbstractTool implements ITool {
 
   private async getForecastDaily(gridPointUrl: string) {
     const headers = {
-      "User-Agent": "weather-mcp-server (katjes733@gmx.net)",
+      "User-Agent": this.getUserAgentHeaderText(),
     };
 
     const forecastUrl = `${gridPointUrl}/forecast?units=us`;

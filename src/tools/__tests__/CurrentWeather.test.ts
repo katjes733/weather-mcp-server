@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from "bun:test";
+import { describe, it, expect, beforeEach, jest, afterEach } from "bun:test";
 import { CurrentWeather } from "../CurrentWeather";
 import dedent from "dedent";
 
@@ -12,6 +12,9 @@ function createInstance() {
 }
 
 describe("CurrentWeather", () => {
+  const originalAppName = process.env.APP_NAME;
+  const originalAppEmail = process.env.APP_EMAIL;
+
   const expectedName = "current-weather";
   const expectedDescription = dedent`
       Get the current weather for a specific location using a grid point URL.
@@ -32,7 +35,14 @@ describe("CurrentWeather", () => {
   };
 
   beforeEach(() => {
+    process.env.APP_NAME = "weather-mcp-server";
+    process.env.APP_EMAIL = "some.email@net.com";
     mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    process.env.APP_NAME = originalAppName;
+    process.env.APP_EMAIL = originalAppEmail;
   });
 
   it("getName returns correct name", () => {

@@ -78,7 +78,7 @@ export class CurrentWeather extends AbstractTool implements ITool {
 
   private async getCurrentWeather(gridPointUrl: string) {
     const headers = {
-      "User-Agent": "weather-mcp-server (katjes733@gmx.net)",
+      "User-Agent": this.getUserAgentHeaderText(),
     };
     const observationStationsUrl = `${gridPointUrl}/stations?limit=1`;
 

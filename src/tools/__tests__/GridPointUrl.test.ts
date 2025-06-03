@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from "bun:test";
+import { describe, it, expect, beforeEach, jest, afterEach } from "bun:test";
 import { GridPointUrl } from "../GridPointUrl";
 import dedent from "dedent";
 
@@ -12,6 +12,9 @@ function createInstance() {
 }
 
 describe("GridPointUrl", () => {
+  const originalAppName = process.env.APP_NAME;
+  const originalAppEmail = process.env.APP_EMAIL;
+
   const expectedName = "get-grid-point-url";
   const expectedDescription = dedent`
     Generate a URL for a specific grid point using latitude and longitude. This URL can be used to access weather data for that grid point.
@@ -32,7 +35,14 @@ describe("GridPointUrl", () => {
   };
 
   beforeEach(() => {
+    process.env.APP_NAME = "weather-mcp-server";
+    process.env.APP_EMAIL = "some.email@net.com";
     mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    process.env.APP_NAME = originalAppName;
+    process.env.APP_EMAIL = originalAppEmail;
   });
 
   it("getName returns correct name", () => {

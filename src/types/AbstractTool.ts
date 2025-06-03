@@ -32,6 +32,15 @@ export class AbstractTool implements ITool {
     };
   }
 
+  getUserAgentHeaderText(): string {
+    if (!process.env.APP_NAME || !process.env.APP_EMAIL) {
+      throw new Error(
+        "Environment variables APP_NAME and APP_EMAIL must be set to generate User-Agent header.",
+      );
+    }
+    return `${process.env.APP_NAME} (${process.env.APP_EMAIL})`;
+  }
+
   handleRequest(request: { params: Record<string, any> }): Promise<{
     content: {
       type: string;

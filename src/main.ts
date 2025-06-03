@@ -14,7 +14,7 @@ await helper.loadTools();
 
 export const server = new Server(
   {
-    name: "weather-mcp-server",
+    name: process.env.APP_NAME || "mcp-server",
     version: "1.0.0",
   },
   {
