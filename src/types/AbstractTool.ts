@@ -1,6 +1,11 @@
 import type { ITool } from "./ITool";
 import { ToolValidationError } from "~/errors/ToolValidationError";
 
+/**
+ * Abstract class for tools that implements the ITool interface.
+ *
+ * Provides default implementations for methods that can be overridden by subclasses.
+ */
 export class AbstractTool implements ITool {
   protected fetch: typeof globalThis.fetch;
 
@@ -8,14 +13,17 @@ export class AbstractTool implements ITool {
     this.fetch = fetch;
   }
 
+  // Subclasses should override this method
   getName(): string {
     throw new Error("Method 'getName()' must be implemented.");
   }
 
+  // Subclasses should override this method
   getDescription(): string {
     throw new Error("Method 'getDescription()' must be implemented.");
   }
 
+  // Subclasses should override this method
   getInputSchema(): {
     type: string;
     properties: Record<string, any>;
@@ -32,6 +40,10 @@ export class AbstractTool implements ITool {
     };
   }
 
+  /**
+   * Generates a User-Agent header text using environment variables.
+   * Throws an error if environment variables APP_NAME or APP_EMAIL are not set.
+   */
   getUserAgentHeaderText(): string {
     if (!process.env.APP_NAME || !process.env.APP_EMAIL) {
       throw new Error(
@@ -68,12 +80,14 @@ export class AbstractTool implements ITool {
   }
 
   /* eslint-disable no-unused-vars */
+  // Subclasses should override this method
   validateWithDefaults(params: Record<string, any>): Record<string, any> {
     throw new Error(
       "Method 'validateWithDefaults(params)' must be implemented.",
     );
   }
 
+  // Subclasses should override this method
   async processToolWorkflow(params: Record<string, any>): Promise<{
     content: { type: string; text: string }[];
   }> {

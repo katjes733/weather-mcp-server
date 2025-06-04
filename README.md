@@ -17,7 +17,8 @@ This is a project utilizing the Model Context Protocol (MCP) and Bun to provide 
 
 ## Background
 
-It demonstrates how to set up a basic server that can handle tool requests and execute them. It supports current and future weather forecasts (hourly and daily) given a zip code. Multiple tools work in tandem and the LLM is orchestrating the usage of the tools based on their configuration.
+It demonstrates how to set up a basic MCP server that can handle tool requests and execute them. It supports current and future weather forecasts (hourly and daily) given a zip code. Multiple tools work in tandem and the LLM is orchestrating the usage of the tools based on their configuration.
+This implementation also provides a simple framework to add additional tools in a consolidated and structured way. For more information, see the [New Tools](#new-tools) section in [Development](#development).
 
 ## Prerequisites
 
@@ -79,8 +80,11 @@ This section is influenced by this general [guide](https://modelcontextprotocol.
 
 ## Usage
 
-1. You can start by simply asking Claude to add two numbers: `add 2 and 3`, which outputs the corresponding result.
-2. You can also ask Claude to add two numbers: `add numbers`. This will trigger a follow-up request to provide the two numbers. Once provided, the response will contain the corresponding result.
+Here are some hints on how to interact with Claude and this MCP Server.
+
+1. You may start by simply asking Claude to get the current weather for your zip code: e.g. `current weather for 90210`, which outputs the corresponding result. You may observe that Claude uses multiple tools sequentially, dynamically and independently to provide the desired result.
+2. You may also ask Claude to for the forecast for the any of the next days: `what's the weather this weekend?`. This will trigger a follow-up request (unless there is a previous zip code in the context from a previous question) to provide the desired zip code. Once provided, the response will contain the corresponding result.
+   1. Notice how Claude automatically reuses the result from previous tool calls, if applicable, to answer this question.
 
 ## Development
 
@@ -98,7 +102,7 @@ export class NewTool extends AbstractTool implements ITool {
 ...
 ```
 
-Additionally, the following methods must be implemented:
+Additionally, the following methods must be implemented (see their corresponding `JSDoc` for details.):
 
 - `getName`
 - `getDescription`
