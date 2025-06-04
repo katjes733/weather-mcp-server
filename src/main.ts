@@ -4,14 +4,17 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import logger from "./log";
+import createLogger from "./log";
 import { Helper } from "./helper";
 
-const helper = new Helper();
+export const logger = createLogger();
 
-const server = new Server(
+export const helper = new Helper();
+await helper.loadTools();
+
+export const server = new Server(
   {
-    name: "weather-mcp-server",
+    name: process.env.APP_NAME || "mcp-server",
     version: "1.0.0",
   },
   {
@@ -23,7 +26,7 @@ const server = new Server(
 );
 
 export const listToolsHandler = async () => {
-  const tools = Array.from((await helper.getTools()).values()).map((tool) =>
+  const tools = Array.from(helper.getToolsSync().values()).map((tool) =>
     tool.getToolConfig(),
   );
   return {
@@ -36,20 +39,17 @@ server.setRequestHandler(ListToolsRequestSchema, listToolsHandler);
 export const callToolHandler = async (request: {
   params: {
     name: string;
-    arguments?: {
-      zipcode?: number;
-      latitude?: number;
-      longitude?: number;
-    };
+    arguments?: Record<string, any>;
   };
 }) => {
   if (
-    (await helper.getTools()).has(request.params.name) &&
+    helper.getToolsSync().has(request.params.name) &&
     request.params.arguments !== undefined
   ) {
-    const tool = (await helper.getTools()).get(request.params.name);
+    const tool = helper.getToolsSync().get(request.params.name);
     if (!tool) {
-      throw new Error("Tool not found");
+      logger.error(`Tool "${request.params.name}" not instantiated.`);
+      throw new Error(`Tool "${request.params.name}" not instantiated.`);
     }
 
     const { arguments: args } = request.params;
@@ -58,7 +58,9 @@ export const callToolHandler = async (request: {
   logger.error(
     `Tool "${request.params.name}" not found or no arguments provided.`,
   );
-  throw new Error(`Tool "${request.params.name}" not found`);
+  throw new Error(
+    `Tool "${request.params.name}" not found or no arguments provided.`,
+  );
 };
 
 server.setRequestHandler(CallToolRequestSchema, callToolHandler);
@@ -67,9 +69,9 @@ export async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   logger.info(
-    `Tools registered: ${[...(await helper.getTools()).keys()].join(", ")}`,
+    { tools: [...helper.getToolsSync().keys()] },
+    "MCP Server running on stdio with tools:",
   );
-  logger.info("MCP Server running on stdio.");
 }
 
 export async function runServer() {

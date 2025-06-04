@@ -8,7 +8,7 @@ export default defineConfig([
   js.configs.recommended,
   {
     name: "node-bun-config",
-    files: ["src/**/*.ts", "src/**/*.tsx"],
+    files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parser,
       ecmaVersion: "latest",
@@ -34,6 +34,5 @@ export default defineConfig([
         node: true,
       },
     },
-    ignores: ["**/__tests__/**", "**/*.test.ts"],
   },
 ]);

@@ -1,11 +1,12 @@
-import dedent from "dedent";
+import { ToolValidationError } from "~/errors/ToolValidationError";
+import { AbstractTool } from "~/types/AbstractTool";
 import type { ITool } from "~/types/ITool";
+import dedent from "dedent";
 
-export class ZipcodeToGeocode implements ITool {
-  private fetch: typeof globalThis.fetch;
-
+export class ZipcodeToGeocode extends AbstractTool implements ITool {
+  // Explicit constructor definition to ensure test coverage in Bun tracks constructor.
   constructor(fetch: typeof globalThis.fetch = globalThis.fetch) {
-    this.fetch = fetch;
+    super(fetch);
   }
 
   getName() {
@@ -23,39 +24,36 @@ export class ZipcodeToGeocode implements ITool {
     `;
   }
 
-  getToolConfig() {
+  getInputSchema(): {
+    type: string;
+    properties: Record<string, any>;
+    required: string[];
+  } {
     return {
-      name: this.getName(),
-      description: this.getDescription(),
-      inputSchema: {
-        type: "object",
-        properties: {
-          zipcode: { type: "number" },
-        },
-        required: ["zipcode"],
+      type: "object",
+      properties: {
+        zipcode: { type: "string" },
       },
+      required: ["zipcode"],
     };
   }
 
-  handleRequest = async (request: {
-    params: {
-      zipcode: number;
-    };
-  }) => {
-    const { zipcode } = request.params as {
-      zipcode: number;
-    };
+  validateWithDefaults(params: Record<string, any>): Record<string, any> {
+    const { zipcode } = params;
 
-    if (typeof zipcode !== "number" || zipcode < 10000 || zipcode > 99999) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Invalid US Zip code "${zipcode}". Ask user for a valid US Zip code.`,
-          },
-        ],
-      };
+    if (typeof zipcode !== "string" || !/^\d{5}(-\d{4})?$/.test(zipcode)) {
+      throw new ToolValidationError(
+        `Invalid US Zip code "${zipcode}". Ask user for a valid US Zip code.`,
+      );
     }
+
+    return { zipcode };
+  }
+
+  async processToolWorkflow(
+    params: Record<string, any>,
+  ): Promise<{ content: { type: string; text: string }[] }> {
+    const { zipcode } = params;
 
     const { latitude, longitude } = await this.zipcodeToGeocode(zipcode);
 
@@ -67,10 +65,10 @@ export class ZipcodeToGeocode implements ITool {
         },
       ],
     };
-  };
+  }
 
   private async zipcodeToGeocode(
-    zipcode: number,
+    zipcode: string,
   ): Promise<{ latitude: string; longitude: string }> {
     const response = await this.fetch(
       `https://api.zippopotam.us/us/${zipcode}`,
@@ -83,6 +81,13 @@ export class ZipcodeToGeocode implements ITool {
     const data = (await response.json()) as {
       places: { latitude: string; longitude: string }[];
     };
+    if (
+      !data.places ||
+      !Array.isArray(data.places) ||
+      data.places.length === 0
+    ) {
+      throw new Error(`No places found for zipcode ${zipcode}`);
+    }
     return {
       latitude: data.places[0].latitude,
       longitude: data.places[0].longitude,
