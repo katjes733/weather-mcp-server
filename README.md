@@ -33,7 +33,11 @@ This implementation also provides a simple framework to add additional tools in 
    bun install
    ```
 
-2. _(Optional)_ Run the following to verify integrity of the project:
+2. Create a `.env` file in the root based on `/env/sample.env`. Provide values as necessary and described.
+
+   **NOTE:** This is mostly relevant if you wish to run the server in development mode via `bun run start`.
+
+3. _(Optional)_ Run the following to verify integrity of the project:
 
    ```sh
    bun run verify
