@@ -6,3 +6,9 @@
 been addressed, or that the new feature works as planned.
 
 **CONTEXT:** Add any other context about your contribution here.
+
+**CHECKLIST:**
+
+- [ ] Code is well-documented
+- [ ] Tests have been added or updated
+- [ ] Changes have been tested locally
