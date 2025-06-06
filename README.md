@@ -27,17 +27,18 @@ This implementation also provides a simple framework to add additional tools in 
 
 ## Setup Project
 
-1. Run:
+1. Clone the repository.
+2. Run:
 
    ```sh
    bun install
    ```
 
-2. Create a `.env` file in the root based on `/env/sample.env`. Provide values as necessary and described.
+3. Create a `.env` file in the root based on `/env/sample.env`. Provide values as necessary and described.
 
    **NOTE:** This is mostly relevant if you wish to run the server in development mode via `bun run start`.
 
-3. _(Optional)_ Run the following to verify integrity of the project:
+4. _(Optional)_ Run the following to verify integrity of the project:
 
    ```sh
    bun run verify
@@ -51,7 +52,7 @@ This implementation also provides a simple framework to add additional tools in 
    bun run build
    ```
 
-This will bundle all code into a single `build/main.js` that can be consumed.
+This will bundle the entry `build/main.js`, which can then be consumed.
 
 ## Setup Claude Desktop
 
@@ -94,7 +95,7 @@ Here are some hints on how to interact with Claude and this MCP Server.
 
 ### New Tools
 
-New tools may be added by ensuring each new tool module (in `./src/tools` extends `AbstractTool` and implements `ITool` and provides an explicit constructor (for test coverage):
+New tools may be added by ensuring each new tool module in `./src/tools` extends `AbstractTool` and implements `ITool` and provides an explicit constructor (for test coverage):
 
 ```typescript
 ...
