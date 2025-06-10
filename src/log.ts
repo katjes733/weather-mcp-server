@@ -10,7 +10,8 @@ export default function createLogger(env = Bun.env) {
         level: (label: string): { level: string } => ({ level: label }),
         bindings: (): Record<string, unknown> => ({}),
       },
-      ...(env.LOG_PRETTY_PRINT === "true" && {
+      ...((env.LOG_PRETTY_PRINT === "true" ||
+        env.TRANSPORT_MODE === "stream") && {
         transport: {
           target: path.resolve("node_modules/pino-pretty"),
           options: {
@@ -21,6 +22,6 @@ export default function createLogger(env = Bun.env) {
         },
       }),
     },
-    pino.destination(2), // 2 means write to stderr; prevents interference with StdioServerTransport (stdout)
+    pino.destination(env.TRANSPORT_MODE === "stream" ? 1 : 2), // 2 means write to stderr; prevents interference with StdioServerTransport (stdout)
   );
 }
