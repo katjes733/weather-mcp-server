@@ -1,4 +1,5 @@
 import express from "express";
+import type { Express } from "express";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { InMemoryEventStore } from "@modelcontextprotocol/sdk/examples/shared/inMemoryEventStore.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
@@ -53,7 +54,7 @@ export const callToolHandler = async (request: {
   );
 };
 
-function createServer() {
+export function createServer() {
   const server = new Server(
     {
       name: process.env.APP_NAME || "mcp-server",
@@ -71,11 +72,13 @@ function createServer() {
   return server;
 }
 
-async function runStreamableHttpServer() {
+export function createExpressApp(): Express {
   const app = express();
   app.use(express.json());
 
-  const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
+  const transports: {
+    [sessionId: string]: StreamableHTTPServerTransport;
+  } = {};
 
   app.post("/mcp", async (req, res) => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
@@ -135,6 +138,11 @@ async function runStreamableHttpServer() {
   // Handle DELETE requests for session termination
   app.delete("/mcp", handleSessionRequest);
 
+  return app;
+}
+
+export async function runStreamableHttpServer() {
+  const app = createExpressApp();
   const port = process.env.PORT || 3000;
   app.listen(port, () =>
     logger.info(
@@ -144,7 +152,7 @@ async function runStreamableHttpServer() {
   );
 }
 
-async function runStdioServer() {
+export async function runStdioServer() {
   const transport = new StdioServerTransport();
   await createServer().connect(transport);
   logger.info(
