@@ -12,7 +12,6 @@ import {
 import * as mainModule from "~/main";
 import type { ITool } from "~/types/ITool";
 import request from "supertest";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
@@ -208,13 +207,11 @@ describe("MCP Express API", () => {
   // Add more tests for POST, DELETE, etc.
 
   it("init", async () => {
-    spyOn(typesModule, "isInitializeRequest").mockImplementation((body) => {
-      // Return true or false depending on your test case
-      return body && body.init === true;
-    });
+    spyOn(typesModule, "isInitializeRequest").mockReturnValue(true);
 
     const res = await request(app).post("/mcp").send({ init: true });
     expect(res.status).not.toBe(400);
+    expect(createServerSpy).toHaveBeenCalled();
     expect(connectSpy).toHaveBeenCalled();
   });
 });
